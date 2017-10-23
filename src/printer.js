@@ -3055,7 +3055,6 @@ function printArgumentsList(path, options, print) {
               "(",
               indent(concat([line, concat(printedArguments)])),
               shouldPrintComma(options, "all") ? "," : "",
-              line,
               ")"
             ]),
             { shouldBreak: true }
@@ -3071,7 +3070,6 @@ function printArgumentsList(path, options, print) {
       "(",
       indent(concat([softline, concat(printedArguments)])),
       ifBreak(shouldPrintComma(options, "all") ? "," : ""),
-      softline,
       ")"
     ]),
     { shouldBreak: printedArguments.some(willBreak) || anyArgEmptyLine }
