@@ -17,6 +17,7 @@ const literalline = docBuilders.literalline;
 const group = docBuilders.group;
 const indent = docBuilders.indent;
 const align = docBuilders.align;
+const dynamic = docBuilders.dynamic;
 const conditionalGroup = docBuilders.conditionalGroup;
 const fill = docBuilders.fill;
 const ifBreak = docBuilders.ifBreak;
@@ -1012,6 +1013,8 @@ function genericPrintNoParens(path, options, print, args) {
         (lastElem.type === "RestProperty" || lastElem.type === "RestElement")
       );
 
+      let mode = n.type === 'ObjectPattern' ||
+          n.type === 'ObjectExpression' && n.properties.every(child => child.shorthand) ? fill : concat;
       let content;
       if (props.length === 0 && !n.typeAnnotation) {
         if (!hasDanglingComments(n)) {
@@ -1030,16 +1033,14 @@ function genericPrintNoParens(path, options, print, args) {
       } else {
         content = concat([
           leftBrace,
-          indent(
-            concat([options.bracketSpacing ? line : softline, concat(props)])
-          ),
+          align(dynamic, mode(props)),
           ifBreak(
             canHaveTrailingSeparator &&
             (separator !== "," || shouldPrintComma(options))
               ? separator
               : ""
           ),
-          concat([options.bracketSpacing ? line : softline, rightBrace]),
+          rightBrace,
           printOptionalToken(path),
           n.typeAnnotation ? ": " : "",
           path.call(print, "typeAnnotation")
@@ -4478,6 +4479,16 @@ function printAssignment(
     return printedLeft;
   }
 
+  // XXX Commenting out isStringLiteral because it is messing up align dynamic
+  // in ObjectExpression. Not sure of the intent, here. It makes funny object
+  // indent if width is constrained, like
+  // {
+  //   foo:
+  //     "bar",
+  //   baz:
+  //     "bar"
+  // }
+  // And apparently similar in other places. Needs more thought.
   const canBreak =
     (isBinaryish(rightNode) && !shouldInlineLogicalExpression(rightNode)) ||
     (rightNode.type === "ConditionalExpression" &&
@@ -4486,7 +4497,7 @@ function printAssignment(
     ((leftNode.type === "Identifier" ||
       isStringLiteral(leftNode) ||
       leftNode.type === "MemberExpression") &&
-      (isStringLiteral(rightNode) || isMemberExpressionChain(rightNode)));
+      (/*isStringLiteral(rightNode) || */isMemberExpressionChain(rightNode)));
 
   const printed = printAssignmentRight(
     rightNode,
