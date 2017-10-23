@@ -26,7 +26,7 @@ function makeIndent(ind) {
   };
 }
 
-function makeAlign(ind, n) {
+function makeAlign(ind, n, pos, tabWidth) {
   if (n === -Infinity) {
     return {
       indent: 0,
@@ -35,6 +35,11 @@ function makeAlign(ind, n) {
         tabs: ""
       }
     };
+  }
+
+  if (n === docBuilders.dynamic) {
+    // I'm a bit unclear on why this expression goes negative.
+    n = Math.max(pos - ind.indent * tabWidth - ind.align.spaces.length, 0);
   }
 
   return {
@@ -46,7 +51,7 @@ function makeAlign(ind, n) {
   };
 }
 
-function fits(next, restCommands, width, mustBeFlat) {
+function fits(next, restCommands, width, mustBeFlat, pos, options) {
   let restIdx = restCommands.length;
   const cmds = [next];
   while (width >= 0) {
@@ -67,7 +72,9 @@ function fits(next, restCommands, width, mustBeFlat) {
     const doc = x[2];
 
     if (typeof doc === "string") {
-      width -= util.getStringWidth(doc);
+      let w = util.getStringWidth(doc);
+      width -= w;
+      pos += w;
     } else {
       switch (doc.type) {
         case "concat":
@@ -81,7 +88,7 @@ function fits(next, restCommands, width, mustBeFlat) {
 
           break;
         case "align":
-          cmds.push([makeAlign(ind, doc.n), mode, doc.contents]);
+          cmds.push([makeAlign(ind, doc.n, pos, options.tabWidth), mode, doc.contents]);
 
           break;
         case "group":
@@ -117,6 +124,7 @@ function fits(next, restCommands, width, mustBeFlat) {
               if (!doc.hard) {
                 if (!doc.soft) {
                   width -= 1;
+                  pos += 1;
                 }
 
                 break;
@@ -172,7 +180,7 @@ function printDocToString(doc, options) {
 
           break;
         case "align":
-          cmds.push([makeAlign(ind, doc.n), mode, doc.contents]);
+          cmds.push([makeAlign(ind, doc.n, pos, options.tabWidth), mode, doc.contents]);
 
           break;
         case "group":
@@ -195,7 +203,7 @@ function printDocToString(doc, options) {
               const next = [ind, MODE_FLAT, doc.contents];
               const rem = width - pos;
 
-              if (!doc.break && fits(next, cmds, rem)) {
+              if (!doc.break && fits(next, cmds, rem, false, pos, options)) {
                 cmds.push(next);
               } else {
                 // Expanded states are a rare case where a document
@@ -223,7 +231,7 @@ function printDocToString(doc, options) {
                         const state = doc.expandedStates[i];
                         const cmd = [ind, MODE_FLAT, state];
 
-                        if (fits(cmd, cmds, rem)) {
+                        if (fits(cmd, cmds, rem, false, pos, options)) {
                           cmds.push(cmd);
 
                           break;
@@ -271,7 +279,7 @@ function printDocToString(doc, options) {
           const content = parts[0];
           const contentFlatCmd = [ind, MODE_FLAT, content];
           const contentBreakCmd = [ind, MODE_BREAK, content];
-          const contentFits = fits(contentFlatCmd, [], rem, true);
+          const contentFits = fits(contentFlatCmd, [], rem, true, pos, options);
 
           if (parts.length === 1) {
             if (contentFits) {
@@ -310,7 +318,9 @@ function printDocToString(doc, options) {
             firstAndSecondContentFlatCmd,
             [],
             rem,
-            true
+            true,
+            pos,
+            options
           );
 
           if (firstAndSecondContentFits) {

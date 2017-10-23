@@ -29,6 +29,7 @@ function indent(contents) {
   return { type: "indent", contents };
 }
 
+const dynamic = {}; // id for dynamic n
 function align(n, contents) {
   assertDoc(contents);
 
@@ -135,5 +136,6 @@ module.exports = {
   ifBreak,
   indent,
   align,
+  dynamic,
   addAlignmentToDoc
 };
