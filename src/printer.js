@@ -1147,12 +1147,7 @@ function genericPrintNoParens(path, options, print, args) {
           group(
             concat([
               "[",
-              indent(
-                concat([
-                  softline,
-                  printArrayItems(path, options, "elements", print)
-                ])
-              ),
+                align(dynamic, printArrayItems(path, options, "elements", print)),
               needsForcedTrailingComma ? "," : "",
               ifBreak(
                 canHaveTrailingComma &&
@@ -1166,7 +1161,6 @@ function genericPrintNoParens(path, options, print, args) {
                 options,
                 /* sameIndent */ true
               ),
-              softline,
               "]"
             ])
           )
@@ -4865,7 +4859,7 @@ function printArrayItems(path, options, printPath, print) {
     }
   }, printPath);
 
-  return concat(printedElements);
+  return fill(printedElements);
 }
 
 function hasDanglingComments(node) {
