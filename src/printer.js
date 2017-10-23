@@ -1384,7 +1384,7 @@ function genericPrintNoParens(path, options, print, args) {
         n.kind,
         firstVariable ? concat([" ", firstVariable]) : "",
         indent(
-          concat(
+          fill(
             printed
               .slice(1)
               .map(p =>
